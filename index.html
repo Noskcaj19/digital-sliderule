@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Slide Rule</title>
+  </head>
+  <body>
+    <h1>Digital Slide Rule</h1>
+    <div id="middle-padding"></div>
+    <div class="rules">
+      <div id="slider-top" style="position: relative;" class="rule">
+        <img
+          id="slider-top-img"
+          src="./slide_rule_top.jpg"
+          style="width:1825px"
+        />
+      </div>
+      <div id="slider-front" class="rule">
+        <img
+          id="slider-front-img"
+          src="./slide_rule_front.jpg"
+          style="width:1825px"
+        />
+      </div>
+      <div id="middle-padding"></div>
+      <div id="slider-bottom" style="position: relative;" class="rule">
+        <img
+          id="slider-bottom-img"
+          src="./slide_rule_bottom.jpg"
+          style="width:1825px"
+        />
+      </div>
+      <div id="slider-cursor" class="cursor">
+        <img id="slider-cursor-img" src="./slide_rule_cursor.gif" />
+      </div>
+    </div>
+
+    <div id="middle-padding"></div>
+    <p>
+      Upper reading: Rule: <span id="upper-readout"></span> Cursor:
+      <span id="upper-cursor-readout"></span>
+      <!-- Multiplication: <span id="upper-mult-readout"></span> -->
+    </p>
+    <p>
+      Lower reading: Rule: <span id="lower-readout"></span> Cursor:
+      <span id="lower-cursor-readout"></span>
+      <!-- Multiplication: <span id="lower-mult-readout"></span> -->
+    </p>
+
+    <style>
+      html {
+        overflow: hidden;
+        width: 100vw;
+      }
+
+      .rule {
+        position: absolute;
+        width: 100vw;
+      }
+
+      .cursor {
+        position: absolute;
+        top: 126px;
+      }
+
+      #slider-cursor-img {
+        height: 250px;
+      }
+
+      .rule > img {
+        width: 98%;
+      }
+
+      #middle-padding {
+        height: 78px;
+      }
+
+      #slider-front {
+        margin-top: -4px;
+      }
+    </style>
+
+    <script>
+      let padding = document.getElementById("middle-padding");
+      let upperCursorReadout = document.getElementById("upper-cursor-readout");
+      let lowerCursorReadout = document.getElementById("lower-cursor-readout");
+      let upperReadout = document.getElementById("upper-readout");
+      let lowerReadout = document.getElementById("lower-readout");
+      let upperMultReadout = document.getElementById("upper-mult-readout");
+      let lowerMultReadout = document.getElementById("lower-mult-readout");
+      let front = document.getElementById("slider-front");
+      let cursor = document.getElementById("slider-cursor");
+      let left = false;
+      let right = false;
+      let leftC = false;
+      let rightC = false;
+      let shift = false;
+      let px = 8;
+      let cursorPx = 0;
+
+      document.onreadystatechange = function() {
+        padding.style.height = `${front.offsetHeight - 8}px`;
+      };
+
+      window.onkeydown = function(e) {
+        if (e.key == "ArrowRight") {
+          right = true;
+        } else if (e.key == "ArrowLeft") {
+          left = true;
+        }
+        if (e.key.toLowerCase() == "d") {
+          rightC = true;
+        } else if (e.key.toLowerCase() == "a") {
+          leftC = true;
+        }
+        shift = e.shiftKey;
+      };
+      window.onkeyup = function(e) {
+        if (e.key == "ArrowRight") {
+          right = false;
+        } else if (e.key == "ArrowLeft") {
+          left = false;
+        }
+
+        if (e.key.toLowerCase() == "d") {
+          rightC = false;
+        } else if (e.key.toLowerCase() == "a") {
+          leftC = false;
+        }
+        shift = e.shiftKey;
+      };
+
+      function convertRange(value, r1, r2) {
+        return ((value - r1[0]) * (r2[1] - r2[0])) / (r1[1] - r1[0]) + r2[0];
+      }
+
+      setInterval(function() {
+        let amt = 0;
+        if (right) {
+          amt = 4;
+        }
+        if (left) {
+          amt = -4;
+        }
+        if (shift) {
+          amt /= 4;
+        }
+        let amtC = 0;
+        if (rightC) {
+          amtC = 4;
+        }
+        if (leftC) {
+          amtC = -4;
+        }
+        if (shift) {
+          amtC /= 4;
+        }
+        px += amt;
+        px = Math.max(8, Math.min(px, 1490));
+        cursorPx += amtC;
+        cursorPx = Math.max(89, Math.min(cursorPx, 1571));
+        front.style.left = `${px}px`;
+        cursor.style.left = `${cursorPx}px`;
+
+        let sliderFudge = 7;
+        let upperReading = Math.exp(
+          convertRange(
+            px - sliderFudge,
+            [0, 1490 - sliderFudge],
+            [Math.log(1), Math.log(100)]
+          )
+        );
+        let lowerReading = Math.exp(
+          convertRange(
+            px - sliderFudge,
+            [0, 1490 - sliderFudge],
+            [Math.log(1), Math.log(10)]
+          )
+        );
+
+        upperReadout.textContent = upperReading.toFixed(2);
+        lowerReadout.textContent = lowerReading.toFixed(2);
+
+        let cursorFudge = 1;
+        let upperCursorReading = Math.exp(
+          convertRange(
+            cursorPx - cursorFudge,
+            [89 - cursorFudge, 1571 - cursorFudge],
+            [Math.log(1), Math.log(100)]
+          )
+        );
+        let lowerCursorReading = Math.exp(
+          convertRange(
+            cursorPx - cursorFudge,
+            [89 - cursorFudge, 1571 - cursorFudge],
+            [Math.log(1), Math.log(10)]
+          )
+        );
+
+        upperCursorReadout.textContent = upperCursorReading.toFixed(2);
+        lowerCursorReadout.textContent = lowerCursorReading.toFixed(2);
+
+        // upperMultReadout.textContent = (
+        //   upperReading * upperCursorReading
+        // ).toFixed(2);
+        // lowerMultReadout.textContent = (
+        //   lowerReading * lowerCursorReading
+        // ).toFixed(2);
+      }, 15);
+    </script>
+    <!-- 8 - 1126 -->
+  </body>
+</html>
